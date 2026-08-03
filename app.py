@@ -3,7 +3,7 @@ import joblib
 from typing import Literal
 from pydantic import BaseModel
 import pandas as pd
-from fastapi.middlewares.cors import CROSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 model=joblib.load('tuned_xgboost_pipeline.pkl')
 
