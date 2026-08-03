@@ -6,7 +6,6 @@
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Lucent%20Frontend-79d7ff?style=for-the-badge)](https://diamond-price-prediction-3-x19d.onrender.com)
 [![API Docs](https://img.shields.io/badge/API-FastAPI%20Docs-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://diamond-price-prediction-ukgk.onrender.com/docs)
-
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-Model-EB6C1F?style=flat-square)](https://xgboost.readthedocs.io/)
@@ -220,14 +219,6 @@ curl -X POST "https://diamond-price-prediction-ukgk.onrender.com/predict" \
 | **Deployment** | Render (both frontend and backend) |
 
 ---
-
-## 🗺️ Roadmap
-
-- [ ] Add SHAP-based explainability to show which features drove a prediction
-- [ ] Add unit/integration tests for the API layer
-- [ ] Containerize with Docker for consistent deployment
-- [ ] Add a confidence interval / prediction range alongside the point estimate
-- [ ] CI/CD pipeline for automated retraining and deployment
 
 ---
 
