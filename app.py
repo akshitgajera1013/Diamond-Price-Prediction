@@ -11,13 +11,12 @@ app=FastAPI()
 
 
 app.add_middleware(
-    CROSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=["*"],
+    CORSMiddleware,
+    allow_origins=["*"], # Update this with your frontend URL in production
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 class Features(BaseModel):
     Carat:float
     Cut:Literal['Ideal', 'Premium', 'Good', 'Very Good', 'Fair']
