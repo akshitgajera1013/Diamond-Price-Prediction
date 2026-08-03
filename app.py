@@ -3,10 +3,20 @@ import joblib
 from typing import Literal
 from pydantic import BaseModel
 import pandas as pd
+from fastapi.middlewares.cors import CROSMiddleware
 
 model=joblib.load('tuned_xgboost_pipeline.pkl')
 
 app=FastAPI()
+
+
+app.add_middleware(
+    CROSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Features(BaseModel):
     Carat:float

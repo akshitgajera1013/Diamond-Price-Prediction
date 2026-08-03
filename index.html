@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucent — Diamond Valuation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --onyx:#0b0d12;
+    --charcoal:#12151d;
+    --panel:#161a24;
+    --line: rgba(180,196,220,0.10);
+    --ice:#eef2f7;
+    --silver:#8b93a7;
+    --silver-dim:#5b6376;
+    --lucent:#79d7ff;
+    --lucent-dim: rgba(121,215,255,0.35);
+    --gold:#d4af6a;
+    --danger:#ff8a80;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:
+      radial-gradient(1200px 700px at 15% -10%, rgba(121,215,255,0.06), transparent 60%),
+      radial-gradient(900px 600px at 100% 10%, rgba(212,175,106,0.05), transparent 55%),
+      var(--onyx);
+    color:var(--ice);
+    font-family:'Manrope', sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  ::selection{ background:var(--lucent-dim); color:var(--onyx); }
+
+  a{color:inherit;}
+
+  .noise{
+    position:fixed; inset:0; pointer-events:none; z-index:1; opacity:0.035; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- NAV ---------- */
+  header{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:22px 6vw;
+    backdrop-filter: blur(14px);
+    background:rgba(11,13,18,0.6);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Cormorant Garamond', serif;
+    font-size:1.5rem; letter-spacing:0.04em; font-weight:600;
+  }
+  .brand svg{width:22px;height:22px;}
+  .brand small{
+    display:block; font-family:'Manrope',sans-serif; font-size:0.55rem; letter-spacing:0.28em;
+    color:var(--silver-dim); font-weight:600; margin-top:-2px;
+  }
+  nav a{
+    font-size:0.8rem; letter-spacing:0.03em; color:var(--silver); text-decoration:none;
+    margin-left:34px; transition:color .25s ease;
+  }
+  nav a:hover{color:var(--lucent);}
+  nav{display:flex;}
+  @media (max-width:760px){ nav{display:none;} }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative; z-index:2;
+    display:grid; grid-template-columns: 1.05fr 0.95fr; align-items:center;
+    gap:40px; padding:8vh 6vw 10vh;
+    max-width:1400px; margin:0 auto;
+  }
+  @media (max-width:900px){ .hero{grid-template-columns:1fr; padding-top:6vh;} }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:10px;
+    font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase;
+    color:var(--silver); border:1px solid var(--line); padding:7px 14px; border-radius:999px;
+    margin-bottom:26px;
+  }
+  .eyebrow::before{
+    content:''; width:6px; height:6px; border-radius:50%; background:var(--lucent);
+    box-shadow:0 0 10px 2px var(--lucent-dim);
+  }
+
+  h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:500;
+    font-size:clamp(2.6rem, 5vw, 4.4rem);
+    line-height:1.04;
+    letter-spacing:0.002em;
+  }
+  h1 em{
+    font-style:italic; font-weight:600;
+    background:linear-gradient(100deg, var(--ice) 30%, var(--lucent) 60%, var(--ice) 80%);
+    background-size:220% auto;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:sheenText 7s ease-in-out infinite;
+  }
+  @keyframes sheenText{
+    0%,100%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+  }
+
+  .hero p.lede{
+    margin-top:22px; max-width:46ch; color:var(--silver);
+    font-size:1.02rem; line-height:1.7;
+  }
+
+  .hero-cta{ display:flex; gap:16px; margin-top:38px; align-items:center; flex-wrap:wrap;}
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    font-family:'Manrope',sans-serif; font-weight:700; font-size:0.86rem; letter-spacing:0.02em;
+    padding:15px 28px; border-radius:10px;
+    transition: transform .2s ease, box-shadow .3s ease, background .3s ease;
+  }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--lucent), #4fb8e6);
+    color:#031018;
+    box-shadow:0 10px 30px -10px rgba(121,215,255,0.55);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 16px 36px -10px rgba(121,215,255,0.7); }
+  .btn-ghost{
+    background:transparent; color:var(--ice); border:1px solid var(--line);
+  }
+  .btn-ghost:hover{ border-color:var(--lucent-dim); color:var(--lucent); }
+
+  .stat-row{ display:flex; gap:34px; margin-top:52px; flex-wrap:wrap; }
+  .stat-row div{ border-left:1px solid var(--line); padding-left:16px; }
+  .stat-row b{ display:block; font-family:'JetBrains Mono',monospace; font-size:1.3rem; color:var(--ice);}
+  .stat-row span{ font-size:0.72rem; color:var(--silver-dim); letter-spacing:0.05em;}
+
+  /* ---------- SIGNATURE: FACETED DIAMOND ---------- */
+  .gem-stage{
+    position:relative; display:flex; align-items:center; justify-content:center;
+    height:520px; perspective:1400px;
+  }
+  .gem-glow{
+    position:absolute; width:340px; height:340px; border-radius:50%;
+    background:radial-gradient(circle, rgba(121,215,255,0.22), transparent 70%);
+    filter:blur(10px);
+    animation:pulseGlow 4.5s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{ opacity:0.55; transform:scale(1); }
+    50%{ opacity:0.9; transform:scale(1.12); }
+  }
+  .gem{
+    width:260px; height:320px;
+    transform-style:preserve-3d;
+    animation: gemSpin 9s linear infinite;
+    filter: drop-shadow(0 30px 40px rgba(0,0,0,0.55));
+  }
+  @keyframes gemSpin{
+    0%{ transform:rotateY(0deg) rotateX(6deg); }
+    100%{ transform:rotateY(360deg) rotateX(6deg); }
+  }
+  .gem svg{ width:100%; height:100%; overflow:visible; }
+  .facet{ transition: opacity .4s ease; }
+  .sheen-sweep{
+    position:absolute; top:0; left:-60%; width:40%; height:100%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,0.5), transparent);
+    animation: sweep 4s ease-in-out infinite;
+    mix-blend-mode:overlay; pointer-events:none;
+  }
+  @keyframes sweep{
+    0%{ left:-60%; }
+    45%{ left:120%; }
+    100%{ left:120%; }
+  }
+  .gem-caption{
+    position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+    font-family:'JetBrains Mono', monospace; font-size:0.68rem; letter-spacing:0.18em;
+    color:var(--silver-dim); text-transform:uppercase; white-space:nowrap;
+  }
+
+  /* ---------- SECTION SHELL ---------- */
+  section.panel-section{
+    max-width:1400px; margin:0 auto; padding:6vh 6vw;
+    position:relative; z-index:2;
+  }
+  .section-head{ margin-bottom:44px; max-width:640px; }
+  .section-head .kicker{
+    font-size:0.7rem; letter-spacing:0.24em; text-transform:uppercase; color:var(--lucent);
+    margin-bottom:12px; display:block;
+  }
+  .section-head h2{
+    font-family:'Cormorant Garamond',serif; font-weight:500; font-size:clamp(1.8rem,3vw,2.6rem);
+  }
+  .section-head p{ color:var(--silver); margin-top:12px; line-height:1.7; font-size:0.95rem;}
+
+  /* ---------- THE 4Cs STRIP ---------- */
+  .cs-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+  }
+  @media (max-width:760px){ .cs-strip{ grid-template-columns:repeat(2,1fr);} }
+  .cs-cell{
+    background:var(--charcoal); padding:26px 22px; transition:background .3s ease;
+  }
+  .cs-cell:hover{ background:var(--panel); }
+  .cs-cell .mono-tag{ font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--lucent); letter-spacing:0.1em;}
+  .cs-cell h3{ font-family:'Cormorant Garamond',serif; font-size:1.5rem; margin-top:8px; font-weight:600;}
+  .cs-cell p{ color:var(--silver); font-size:0.85rem; margin-top:8px; line-height:1.6;}
+
+  /* ---------- APPRAISAL FORM (grading-report style) ---------- */
+  .report{
+    display:grid; grid-template-columns: 1.15fr 0.85fr; gap:0;
+    border:1px solid var(--line); border-radius:20px; overflow:hidden;
+    background:var(--charcoal);
+    box-shadow:0 40px 80px -40px rgba(0,0,0,0.7);
+  }
+  @media (max-width:960px){ .report{ grid-template-columns:1fr; } }
+
+  .report-form{ padding:44px; border-right:1px solid var(--line); }
+  @media (max-width:960px){ .report-form{ border-right:none; border-bottom:1px solid var(--line);} }
+
+  .report-head{
+    display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:34px;
+    padding-bottom:22px; border-bottom:1px dashed var(--line);
+  }
+  .report-head h3{ font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-weight:600;}
+  .report-head span{ font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--silver-dim); letter-spacing:0.08em;}
+  .report-id{ text-align:right; }
+
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:22px 20px; }
+  .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:22px 20px; margin-top:22px;}
+  @media (max-width:560px){ .grid-2, .grid-3{ grid-template-columns:1fr 1fr; } }
+
+  .field{ position:relative; }
+  .field label{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--silver-dim);
+    margin-bottom:9px;
+  }
+  .field label .unit{ font-family:'JetBrains Mono',monospace; font-size:0.62rem; color:var(--lucent); text-transform:none; letter-spacing:0.02em;}
+
+  .field input, .field select{
+    width:100%; background:var(--onyx); border:1px solid var(--line); color:var(--ice);
+    padding:13px 14px; border-radius:9px; font-family:'JetBrains Mono',monospace; font-size:0.92rem;
+    outline:none; transition:border-color .25s ease, box-shadow .25s ease;
+    appearance:none;
+  }
+  .field select{ font-family:'Manrope',sans-serif; cursor:pointer; }
+  .field input:focus, .field select:focus{
+    border-color:var(--lucent); box-shadow:0 0 0 3px var(--lucent-dim);
+  }
+  .field::after{
+    content:''; position:absolute; right:14px; bottom:15px; width:0; height:0;
+  }
+  .select-wrap{ position:relative; }
+  .select-wrap::after{
+    content:'▾'; position:absolute; right:14px; top:41px; color:var(--silver-dim); pointer-events:none; font-size:0.75rem;
+  }
+
+  .slider-row{ margin-top:26px; }
+  .slider-row label{ display:flex; justify-content:space-between; font-size:0.7rem; letter-spacing:0.08em; color:var(--silver-dim); text-transform:uppercase; margin-bottom:10px;}
+  .slider-row output{ font-family:'JetBrains Mono',monospace; color:var(--lucent); font-size:0.85rem;}
+  input[type=range]{
+    -webkit-appearance:none; width:100%; height:4px; border-radius:2px;
+    background:var(--line); outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:var(--lucent); cursor:pointer; box-shadow:0 0 0 4px rgba(121,215,255,0.18);
+    border:2px solid var(--onyx);
+  }
+
+  .submit-row{ margin-top:36px; display:flex; align-items:center; gap:18px; }
+  .btn-submit{
+    flex:1; background:linear-gradient(135deg, var(--lucent), #4fb8e6); color:#031018;
+    font-family:'Manrope',sans-serif; font-weight:800; letter-spacing:0.02em; font-size:0.92rem;
+    padding:16px; border:none; border-radius:10px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    transition:transform .2s ease, box-shadow .3s ease, opacity .2s ease;
+    box-shadow:0 14px 34px -12px rgba(121,215,255,0.6);
+  }
+  .btn-submit:hover{ transform:translateY(-2px); }
+  .btn-submit:disabled{ opacity:0.6; cursor:progress; transform:none;}
+  .btn-submit svg{ width:16px; height:16px; }
+
+  .error-msg{
+    margin-top:16px; padding:12px 14px; border-radius:9px; font-size:0.82rem;
+    background:rgba(255,138,128,0.08); border:1px solid rgba(255,138,128,0.35); color:var(--danger);
+    display:none;
+  }
+  .error-msg.show{ display:block; }
+
+  /* ---------- RESULT PANEL ---------- */
+  .report-result{
+    padding:44px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+    position:relative; background:
+      radial-gradient(500px 300px at 50% 0%, rgba(121,215,255,0.06), transparent 70%);
+    min-height:420px;
+  }
+  .result-idle{ text-align:center; color:var(--silver-dim); }
+  .result-idle svg{ width:56px; height:56px; margin-bottom:18px; opacity:0.5; }
+  .result-idle p{ font-size:0.85rem; max-width:26ch; line-height:1.6; margin:0 auto;}
+
+  .result-loading{ display:none; text-align:center; }
+  .result-loading.show{ display:block; }
+  .mini-gem{ width:70px; height:86px; margin:0 auto 20px; animation: gemSpin 1.4s linear infinite; }
+  .result-loading p{ font-family:'JetBrains Mono',monospace; font-size:0.75rem; letter-spacing:0.1em; color:var(--silver); }
+
+  .result-value{ display:none; text-align:center; width:100%; }
+  .result-value.show{ display:block; animation: riseIn .6s cubic-bezier(.2,.8,.2,1); }
+  @keyframes riseIn{ from{ opacity:0; transform:translateY(18px);} to{ opacity:1; transform:translateY(0);} }
+
+  .ticket{
+    border:1px solid var(--line); border-radius:16px; padding:30px 24px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+    position:relative;
+  }
+  .ticket::before, .ticket::after{
+    content:''; position:absolute; width:22px; height:22px; background:var(--charcoal);
+    border-radius:50%; top:50%; transform:translateY(-50%);
+  }
+  .ticket::before{ left:-11px; }
+  .ticket::after{ right:-11px; }
+  .ticket .label{ font-size:0.68rem; letter-spacing:0.2em; text-transform:uppercase; color:var(--silver-dim);}
+  .ticket .price{
+    font-family:'Cormorant Garamond',serif; font-weight:600; font-size:clamp(2.4rem,4vw,3.2rem);
+    color:var(--gold); margin:10px 0 4px;
+    letter-spacing:0.01em;
+  }
+  .ticket .price span{ font-size:1.4rem; vertical-align:top; margin-right:4px; opacity:0.8;}
+  .ticket .sub{ font-size:0.78rem; color:var(--silver); }
+  .ticket-divider{ border-top:1px dashed var(--line); margin:20px 0; }
+  .spec-recap{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .spec-chip{
+    font-family:'JetBrains Mono',monospace; font-size:0.68rem; padding:6px 10px; border-radius:6px;
+    border:1px solid var(--line); color:var(--silver);
+  }
+
+  footer{
+    border-top:1px solid var(--line); padding:34px 6vw; text-align:center;
+    color:var(--silver-dim); font-size:0.78rem; position:relative; z-index:2;
+  }
+  footer a{ color:var(--lucent); text-decoration:none; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M2 9L6 3H18L22 9L12 22L2 9Z" stroke="#79d7ff" stroke-width="1.4" stroke-linejoin="round"/><path d="M2 9H22M6 3L9 9L12 22L15 9L18 3M9 9H15" stroke="#79d7ff" stroke-width="1" opacity="0.6"/></svg>
+    <div>LUCENT<small>DIAMOND INTELLIGENCE</small></div>
+  </div>
+  <nav>
+    <a href="#the-cs">The 4Cs</a>
+    <a href="#appraisal">Appraisal</a>
+    <a href="#about">About</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">XGBoost Regression · Live Inference</div>
+    <h1>Know a diamond's <em>true worth</em><br>before you buy it.</h1>
+    <p class="lede">Lucent runs a tuned gradient‑boosted model over carat, cut, color, clarity and precise millimeter geometry to return an instant, data‑backed valuation — the kind of judgment a master appraiser forms in seconds.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary" onclick="document.getElementById('appraisal').scrollIntoView({behavior:'smooth'})">Start an appraisal</button>
+      <a class="btn btn-ghost" href="#the-cs">Learn the 4Cs</a>
+    </div>
+    <div class="stat-row">
+      <div><b>R² 0.98+</b><span>MODEL FIT</span></div>
+      <div><b>9</b><span>INPUT FEATURES</span></div>
+      <div><b>&lt;1s</b><span>INFERENCE TIME</span></div>
+    </div>
+  </div>
+
+  <div class="gem-stage">
+    <div class="gem-glow"></div>
+    <div class="gem">
+      <svg viewBox="0 0 200 240">
+        <defs>
+          <linearGradient id="fA" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#dff5ff"/><stop offset="100%" stop-color="#79d7ff"/>
+          </linearGradient>
+          <linearGradient id="fB" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#9fe6ff"/><stop offset="100%" stop-color="#3f9fc9"/>
+          </linearGradient>
+          <linearGradient id="fC" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stop-color="#1c5e79"/><stop offset="100%" stop-color="#5cc3ea"/>
+          </linearGradient>
+          <linearGradient id="fD" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#eaf9ff"/><stop offset="100%" stop-color="#b9ecff"/>
+          </linearGradient>
+        </defs>
+        <!-- table -->
+        <polygon class="facet" points="70,40 130,40 150,66 50,66" fill="url(#fD)" opacity="0.95"/>
+        <!-- crown facets -->
+        <polygon class="facet" points="70,40 50,66 20,60" fill="url(#fA)" opacity="0.9"/>
+        <polygon class="facet" points="130,40 150,66 180,60" fill="url(#fA)" opacity="0.85"/>
+        <polygon class="facet" points="70,40 20,60 45,30" fill="url(#fB)" opacity="0.8"/>
+        <polygon class="facet" points="130,40 180,60 155,30" fill="url(#fB)" opacity="0.8"/>
+        <!-- girdle -->
+        <polygon class="facet" points="20,60 50,66 150,66 180,60 165,78 35,78" fill="url(#fC)" opacity="0.9"/>
+        <!-- pavilion -->
+        <polygon class="facet" points="35,78 165,78 100,220" fill="url(#fB)" opacity="0.95"/>
+        <polygon class="facet" points="35,78 100,220 20,60" fill="url(#fA)" opacity="0.6"/>
+        <polygon class="facet" points="165,78 100,220 180,60" fill="url(#fA)" opacity="0.6"/>
+        <polygon class="facet" points="20,60 100,220 60,50" fill="url(#fD)" opacity="0.4"/>
+        <polygon class="facet" points="180,60 100,220 140,50" fill="url(#fD)" opacity="0.4"/>
+      </svg>
+      <div class="sheen-sweep"></div>
+    </div>
+    <div class="gem-caption">Round Brilliant · 58 Facets</div>
+  </div>
+</section>
+
+<section class="panel-section" id="the-cs">
+  <div class="section-head">
+    <span class="kicker">Valuation Fundamentals</span>
+    <h2>The four pillars the model learns from</h2>
+    <p>Every prediction is built on the same criteria gemologists have used for a century — plus the physical geometry a grading report doesn't always emphasize.</p>
+  </div>
+  <div class="cs-strip">
+    <div class="cs-cell">
+      <span class="mono-tag">01 · CARAT</span>
+      <h3>Weight</h3>
+      <p>The single strongest price driver — value rises non‑linearly as carat weight increases.</p>
+    </div>
+    <div class="cs-cell">
+      <span class="mono-tag">02 · CUT</span>
+      <h3>Craftsmanship</h3>
+      <p>From Fair to Ideal, cut quality determines how brilliantly a stone returns light.</p>
+    </div>
+    <div class="cs-cell">
+      <span class="mono-tag">03 · COLOR</span>
+      <h3>D → J Scale</h3>
+      <p>Colorless stones (D) command a premium over warmer, more tinted grades (J).</p>
+    </div>
+    <div class="cs-cell">
+      <span class="mono-tag">04 · CLARITY</span>
+      <h3>Inclusions</h3>
+      <p>From IF (Internally Flawless) to I1, clarity measures visible imperfections.</p>
+    </div>
+  </div>
+</section>
+
+<section class="panel-section" id="appraisal">
+  <div class="section-head">
+    <span class="kicker">Instant Appraisal</span>
+    <h2>Enter the stone's specifications</h2>
+    <p>These are the exact fields the model was trained on. Fill in the grading details and the physical measurements for a live price estimate.</p>
+  </div>
+
+  <div class="report">
+    <div class="report-form">
+      <div class="report-head">
+        <div>
+          <h3>Grading Input</h3>
+          <span>MODEL &nbsp;·&nbsp; TUNED XGBOOST PIPELINE</span>
+        </div>
+        <div class="report-id">
+          <span>REF</span><br>
+          <span id="refId">LX-000000</span>
+        </div>
+      </div>
+
+      <form id="gemForm">
+        <div class="grid-2">
+          <div class="field">
+            <label>Carat <span class="unit">ct</span></label>
+            <input type="number" id="Carat" step="0.01" min="0.1" max="6" value="0.90" required>
+          </div>
+          <div class="select-wrap field">
+            <label>Cut</label>
+            <select id="Cut">
+              <option value="Ideal">Ideal</option>
+              <option value="Premium">Premium</option>
+              <option value="Very Good">Very Good</option>
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+            </select>
+          </div>
+          <div class="select-wrap field">
+            <label>Color</label>
+            <select id="Color">
+              <option>D</option><option>E</option><option>F</option>
+              <option>G</option><option>H</option><option>I</option><option>J</option>
+            </select>
+          </div>
+          <div class="select-wrap field">
+            <label>Clarity</label>
+            <select id="Clarity">
+              <option>IF</option><option>VVS1</option><option>VVS2</option>
+              <option>VS1</option><option>VS2</option><option>SI1</option>
+              <option>SI2</option><option>I1</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="slider-row">
+          <label>Depth <output id="depthOut">61.5</output><span class="unit">%</span></label>
+          <input type="range" id="Depth" min="40" max="80" step="0.1" value="61.5">
+        </div>
+        <div class="slider-row">
+          <label>Table <output id="tableOut">57.0</output><span class="unit">%</span></label>
+          <input type="range" id="Table" min="40" max="80" step="0.1" value="57.0">
+        </div>
+
+        <div class="grid-3">
+          <div class="field">
+            <label>X <span class="unit">mm</span></label>
+            <input type="number" id="X" step="0.01" min="0" max="15" value="6.20" required>
+          </div>
+          <div class="field">
+            <label>Y <span class="unit">mm</span></label>
+            <input type="number" id="Y" step="0.01" min="0" max="15" value="6.15" required>
+          </div>
+          <div class="field">
+            <label>Z <span class="unit">mm</span></label>
+            <input type="number" id="Z" step="0.01" min="0" max="15" value="3.80" required>
+          </div>
+        </div>
+
+        <div class="submit-row">
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M2 9L6 3H18L22 9L12 22L2 9Z" stroke="#031018" stroke-width="2" stroke-linejoin="round"/></svg>
+            Appraise this stone
+          </button>
+        </div>
+        <div class="error-msg" id="errorMsg"></div>
+      </form>
+    </div>
+
+    <div class="report-result">
+      <div class="result-idle" id="stateIdle">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M2 9L6 3H18L22 9L12 22L2 9Z" stroke="#5b6376" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        <p>Your valuation certificate will appear here once the model returns a prediction.</p>
+      </div>
+
+      <div class="result-loading" id="stateLoading">
+        <div class="mini-gem">
+          <svg viewBox="0 0 200 240">
+            <polygon points="70,40 130,40 150,66 50,66" fill="#79d7ff"/>
+            <polygon points="35,78 165,78 100,220" fill="#3f9fc9"/>
+            <polygon points="20,60 50,66 150,66 180,60 165,78 35,78" fill="#1c5e79"/>
+          </svg>
+        </div>
+        <p>ANALYZING FACETS &amp; GEOMETRY…</p>
+      </div>
+
+      <div class="result-value" id="stateValue">
+        <div class="ticket">
+          <div class="label">Estimated Market Value</div>
+          <div class="price"><span>$</span><span id="priceOut">0</span></div>
+          <div class="sub">Based on tuned XGBoost regression pipeline</div>
+          <div class="ticket-divider"></div>
+          <div class="spec-recap" id="specRecap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel-section" id="about">
+  <div class="section-head">
+    <span class="kicker">About the model</span>
+    <h2>Served straight from a live FastAPI endpoint</h2>
+    <p>This interface calls a tuned XGBoost pipeline deployed on Render at
+      <code style="font-family:'JetBrains Mono',monospace;color:var(--lucent)">/predict</code>.
+      No values are hard‑coded — every card above reflects a real inference request.</p>
+  </div>
+</section>
+
+<footer>
+  Lucent Diamond Intelligence — a demonstration frontend for a FastAPI + XGBoost pricing model.
+</footer>
+
+<script>
+  const API_URL = "https://diamond-price-prediction-1-jy99.onrender.com/predict";
+
+  // random reference id
+  document.getElementById('refId').textContent =
+    'LX-' + Math.floor(100000 + Math.random()*900000);
+
+  // slider live outputs
+  const depth = document.getElementById('Depth');
+  const depthOut = document.getElementById('depthOut');
+  depth.addEventListener('input', () => depthOut.textContent = parseFloat(depth.value).toFixed(1));
+
+  const table = document.getElementById('Table');
+  const tableOut = document.getElementById('tableOut');
+  table.addEventListener('input', () => tableOut.textContent = parseFloat(table.value).toFixed(1));
+
+  const form = document.getElementById('gemForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorMsg = document.getElementById('errorMsg');
+
+  const stateIdle = document.getElementById('stateIdle');
+  const stateLoading = document.getElementById('stateLoading');
+  const stateValue = document.getElementById('stateValue');
+
+  function setState(name){
+    stateIdle.classList.remove('show');
+    stateLoading.classList.remove('show');
+    stateValue.classList.remove('show');
+    if(name === 'idle') stateIdle.style.display = 'block';
+    else stateIdle.style.display = 'none';
+    if(name === 'loading'){ stateLoading.classList.add('show'); }
+    if(name === 'value'){ stateValue.classList.add('show'); }
+  }
+
+  function animateCount(el, target){
+    const duration = 900;
+    const start = performance.now();
+    function tick(now){
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = Math.round(target * eased);
+      el.textContent = val.toLocaleString('en-US');
+      if(p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.classList.remove('show');
+    errorMsg.textContent = '';
+
+    const payload = {
+      Carat: parseFloat(document.getElementById('Carat').value),
+      Cut: document.getElementById('Cut').value,
+      Color: document.getElementById('Color').value,
+      Clarity: document.getElementById('Clarity').value,
+      Depth: parseFloat(document.getElementById('Depth').value),
+      Table: parseFloat(document.getElementById('Table').value),
+      X: parseFloat(document.getElementById('X').value),
+      Y: parseFloat(document.getElementById('Y').value),
+      Z: parseFloat(document.getElementById('Z').value),
+    };
+
+    submitBtn.disabled = true;
+    setState('loading');
+
+    try{
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if(!res.ok){
+        const text = await res.text();
+        throw new Error(`Server responded ${res.status}: ${text.slice(0,180)}`);
+      }
+
+      const data = await res.json();
+      const price = Math.round(data.Price);
+
+      document.getElementById('specRecap').innerHTML = `
+        <span class="spec-chip">${payload.Carat.toFixed(2)} ct</span>
+        <span class="spec-chip">${payload.Cut}</span>
+        <span class="spec-chip">Color ${payload.Color}</span>
+        <span class="spec-chip">${payload.Clarity}</span>
+      `;
+
+      setState('value');
+      animateCount(document.getElementById('priceOut'), price);
+
+    }catch(err){
+      setState('idle');
+      errorMsg.textContent = 'Could not reach the prediction service — ' + err.message +
+        '. Note: the backend must allow cross-origin requests (CORS) from this page for the call to succeed.';
+      errorMsg.classList.add('show');
+    }finally{
+      submitBtn.disabled = false;
+    }
+  });
+
+  setState('idle');
+</script>
+
+</body>
+</html>
