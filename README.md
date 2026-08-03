@@ -66,41 +66,96 @@ The project covers the complete ML lifecycle:
 
 ---
 
-## 🧠 Model & Data Pipeline
+## 🧠 Notebook Walkthrough — `Diamond_Price_Prediction.ipynb`
 
-### Dataset
-- **Source:** [Diamond Price Prediction Dataset](https://www.kaggle.com/datasets/ronil8/diamond-price-prediction-dataset) (Kaggle)
-- **Size:** 53,940 rows × 10 columns (carat, cut, color, clarity, depth, table, price, and X/Y/Z dimensions)
+The notebook covers the full workflow from raw data to a tuned, serialized model. Below is a breakdown of every technique used, in the order it's applied.
 
-### Preprocessing
-| Step | Technique |
+### 1. Dataset
+- **Source:** [Diamond Price Prediction Dataset](https://www.kaggle.com/datasets/ronil8/diamond-price-prediction-dataset) (Kaggle), loaded via `kagglehub`
+- **Raw size:** 53,940 rows × 10 columns — `Carat(Weight of Daimond)`, `Cut(Quality)`, `Color`, `Clarity`, `Depth`, `Table`, `Price(in US dollars)`, `X(length)`, `Y(width)`, `Z(Depth)`
+
+### 2. Data cleaning
+- **Null check** — `df.isnull().sum()` confirmed no missing values
+- **Duplicate removal** — `df.drop_duplicates()`
+- **Outlier removal** — IQR method applied to *all* numeric columns: `Q1`, `Q3`, `IQR = Q3 - Q1`, bounds set at `Q1 - 1.5×IQR` / `Q3 + 1.5×IQR`; any row with an outlier in any numeric column was dropped
+
+### 3. Exploratory Data Analysis (EDA)
+| Technique | Purpose |
 |---|---|
-| Duplicates | Dropped exact duplicate rows |
-| Outliers | Removed via IQR method (1.5×IQR bounds) on all numeric columns |
-| Skew correction | `log1p` transform + `StandardScaler` on `Carat`, `Depth`, `Y`, `Z` |
-| Scaling | `StandardScaler` on `Table`, `X` |
-| `Cut` (ordinal) | `OrdinalEncoder` with explicit quality order: `Fair < Good < Very Good < Premium < Ideal` |
-| `Color`, `Clarity` (nominal) | `OneHotEncoder` |
-| Statistical validation | One-way ANOVA confirmed all three categorical features are significant predictors of price |
+| `sns.countplot` | Class distribution of `Cut`, `Color`, `Clarity` |
+| `sns.boxplot` | Price spread across each categorical grade |
+| `sns.scatterplot` | Relationship between `Carat` and `Price` |
+| `sns.kdeplot` | Price distribution shape (checked for skew) |
+| `sns.heatmap` (correlation matrix) | Pairwise correlation between numeric features |
+| `.skew()` | Quantified skewness of each numeric column pre- and post-transform |
+| **One-way ANOVA** (`scipy.stats.f_oneway`) | Statistically tested whether `Cut`, `Color`, and `Clarity` each have a significant effect on `Price` — all three came back significant |
 
-### Model selection
-Five regressors were benchmarked with 5-fold cross-validated R²:
+### 4. Feature engineering & encoding strategy
+Features were split into four groups, each handled by its own transformer inside a `ColumnTransformer`:
+
+| Group | Columns | Technique |
+|---|---|---|
+| **Skewed numeric** | `Carat`, `Depth`, `Y (width)`, `Z (depth)` | `FunctionTransformer(np.log1p)` → `StandardScaler` (log-transform to reduce skew, then standardize) |
+| **Regular numeric** | `Table`, `X (length)` | `StandardScaler` only |
+| **Ordinal categorical** | `Cut` | `OrdinalEncoder` with an explicit, domain-informed order: `Fair < Good < Very Good < Premium < Ideal` (preserves the natural quality ranking instead of treating grades as unordered) |
+| **Nominal categorical** | `Color`, `Clarity` | `OneHotEncoder` (no inherent order, so one-hot avoids introducing a false ranking) |
+
+All four transformers are combined with `sklearn.compose.ColumnTransformer` and wrapped in a single `sklearn.pipeline.Pipeline` alongside the estimator — so preprocessing and modeling are trained and serialized together as one artifact (`tuned_xgboost_pipeline.pkl`), and the exact same transformations are applied automatically at inference time in `app.py`.
+
+```python
+skew_pipeline = Pipeline([
+    ('skew', FunctionTransformer(np.log1p)),
+    ('scale', StandardScaler())
+])
+num_pipeline = Pipeline([('scale', StandardScaler())])
+ordinal_pipeline = Pipeline([
+    ('encoder', OrdinalEncoder(categories=[['Fair','Good','Very Good','Premium','Ideal']]))
+])
+cat_pipeline = Pipeline([('one-hot', OneHotEncoder())])
+
+preprocessor = ColumnTransformer([
+    ('skew', skew_pipeline, skewed_cols),
+    ('num', num_pipeline, ['Table', 'X(length)']),
+    ('ordinal', ordinal_pipeline, ['Cut(Quality)']),
+    ('cat', cat_pipeline, ['Color', 'Clarity'])
+])
+```
+
+### 5. Train/test split
+`train_test_split` — 80/20 split, `random_state=42`.
+
+### 6. Model benchmarking
+Five regression algorithms were each dropped into the same `Pipeline` (preprocessor + model) and evaluated with **5-fold cross-validation** (`cross_val_score`, `scoring='r2'`) on the training set:
 
 | Model | CV R² Score |
 |---|---|
 | Linear Regression | 0.925 |
 | Support Vector Machine (SVR) | 0.687 |
-| Decision Tree | 0.966 |
-| Random Forest | 0.982 |
-| **XGBoost** | **0.982** |
+| Decision Tree Regressor | 0.966 |
+| Random Forest Regressor | 0.982 |
+| **XGBoost Regressor** | **0.982** |
 
-XGBoost was selected and further tuned with `RandomizedSearchCV` across `n_estimators`, `learning_rate`, `max_depth`, `subsample`, and `colsample_bytree`.
+### 7. Hyperparameter tuning
+XGBoost was selected as the production candidate and tuned with **`RandomizedSearchCV`** over the full preprocessing + model pipeline:
 
-### Final performance (held-out test set)
+```python
+param_dist = {
+    'model__n_estimators': [100, 300, 500, 800],
+    'model__learning_rate': [0.01, 0.05, 0.1, 0.2],
+    'model__max_depth': [3, 5, 7, 9],
+    'model__subsample': [0.6, 0.8, 1.0],
+    'model__colsample_bytree': [0.6, 0.8, 1.0]
+}
+```
+
+### 8. Final evaluation (held-out test set)
 | Metric | Score |
 |---|---|
 | **R² Score** | **0.9838** |
 | **Mean Absolute Error** | **$194.16** |
+
+### 9. Serialization
+The best estimator (`xgb_random_search.best_estimator_` — the full pipeline, preprocessing included) is persisted with **`joblib.dump()`**, so `app.py` only needs to `joblib.load()` it and call `.predict()` directly on raw feature input.
 
 ---
 
@@ -220,7 +275,6 @@ curl -X POST "https://diamond-price-prediction-ukgk.onrender.com/predict" \
 
 ---
 
----
 
 ## 🤝 Contributing
 
