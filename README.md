@@ -56,6 +56,10 @@ The project covers the complete ML lifecycle:
 
 ---
 
+
+|  ![Output](images/1.png) |  ![Output](images/2.png)  |  ![Output](images/3.png)  |  ![Output](images/4.png)
+
+
 ## ✨ Features
 
 - **Interactive valuation UI** — a dark, jewel-toned interface ("Lucent") with live sliders, an animated 3D-style diamond, and an instant "valuation certificate" result card
